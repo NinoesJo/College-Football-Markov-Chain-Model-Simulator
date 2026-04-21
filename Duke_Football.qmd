@@ -1,1 +1,22 @@
+---
+title: "Duke Football"
+author: "Johan Nino Espino"
+format: 
+  pdf:
+    fig-height: 4
+    fig-width: 6
+---
 
+```{r}
+
+# load any packetges
+library(cfbfastR)
+library(dplyr)
+```
+
+```{r}
+
+pbp <- load_cfb_pbp(2025)
+duke_possession <- pbp |>
+  filter(pos_team == "Duke")
+```
