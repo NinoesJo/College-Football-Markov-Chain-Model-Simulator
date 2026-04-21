@@ -1,5 +1,5 @@
 ---
-title: "Duke Football"
+title: "Clemson Football"
 author: "Johan Nino Espino"
 format: 
   pdf:
@@ -19,14 +19,14 @@ library(ggplot2)
 
 # load the Duke dataset
 pbp <- load_cfb_pbp(2025)
-duke_possession <- pbp |>
-  filter(pos_team == "Duke")
+clemson_possession <- pbp |>
+  filter(pos_team == "Clemson")
 ```
 
 ```{r}
 
 # Create play categories
-duke_plays <- duke_possession |>
+clemson_plays <- clemson_possession |>
   mutate(
     play_category = case_when(
       play_type == "Rush" ~ "Run",
@@ -40,17 +40,17 @@ duke_plays <- duke_possession |>
 ```{r}
 
 # Compute the play categories probabilities
-play_probs <- duke_plays |>
+clemson_play_probs <- clemson_plays |>
   count(play_category) |>
   mutate(prob = n / sum(n))
 
-play_probs
+clemson_play_probs
 ```
 
 ```{r}
 
 # Plot the probabilities
-ggplot(play_probs, aes(x = play_category, y = prob, fill = play_category)) +
+ggplot(clemson_play_probs, aes(x = play_category, y = prob, fill = play_category)) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = round(prob, 3)), vjust = -0.5) +
   labs(
@@ -64,7 +64,7 @@ ggplot(play_probs, aes(x = play_category, y = prob, fill = play_category)) +
 ```{r}
 
 # Ensure state variables exists
-duke_plays <- duke_possession |>
+clemson_plays <- clemson_possession |>
   filter(play_type %in% c("Rush", "Pass Reception", "Pass Incompletion", "Sack")) %>%
   mutate(
     play_category = ifelse(play_type == "Rush", "Run", "Pass"),
@@ -83,18 +83,18 @@ duke_plays <- duke_possession |>
 ```{r}
 
 # Compute the probbilities by state
-state_probs <- duke_plays %>%
+clemson_state_probs <- clemson_plays %>%
   group_by(down, distance_bucket, field_bucket, play_category) |>
   summarise(n = n(), .groups = "drop") |>
   group_by(down, distance_bucket, field_bucket) |>
   mutate(prob = n / sum(n))
-state_probs
+clemson_state_probs
 ```
 
 ```{r}
 
 # Visualize
-ggplot(state_probs, aes(x = play_category, y = prob, fill = play_category)) +
+ggplot(clemson_state_probs, aes(x = play_category, y = prob, fill = play_category)) +
   geom_bar(stat = "identity") +
   facet_grid(down ~ distance_bucket) +
   labs(
@@ -109,18 +109,18 @@ ggplot(state_probs, aes(x = play_category, y = prob, fill = play_category)) +
 ```{r}
 
 # Probabilities by state without field bucket
-state_probs_2 <- duke_plays %>%
+clemson_state_probs_2 <- clemson_plays %>%
   group_by(down, distance_bucket, play_category) |>
   summarise(n = n(), .groups = "drop") |>
   group_by(down, distance_bucket) |>
   mutate(prob = n / sum(n))
-state_probs_2 
+clemson_state_probs_2
 ```
 
 ```{r}
 
 # Looking at the outcomes of these states (play type, downs, distance)
-state_outcomes_data <- duke_possession |>
+clemson_state_outcomes_data <- clemson_possession |>
   arrange(game_id, drive_id, drive_play_number) |>
   group_by(game_id, drive_id) |>
   mutate(
@@ -165,7 +165,7 @@ state_outcomes_data <- duke_possession |>
     fg_attempt_flag = ifelse(grepl("Field Goal", next_play_type), 1, 0)
   )
 
-state_outcomes <- state_outcomes_data |>
+clemson_state_outcomes <- clemson_state_outcomes_data |>
   group_by(play_category, down, distance_bucket) |>
   summarise(
     n_plays = n(),
@@ -178,13 +178,13 @@ state_outcomes <- state_outcomes_data |>
     .groups = "drop"
   )
 
-state_outcomes
+clemson_state_outcomes
 ```
 
 ```{r}
 
 # Plot the outcomes
-ggplot(state_outcomes,
+ggplot(clemson_state_outcomes,
        aes(x = distance_bucket, y = first_down_rate, fill = play_category)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~down) +
@@ -195,7 +195,7 @@ ggplot(state_outcomes,
   ) +
   theme_minimal()
 
-ggplot(state_outcomes,
+ggplot(clemson_state_outcomes,
        aes(x = distance_bucket, y = turnover_rate, fill = play_category)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~down) +
@@ -206,7 +206,7 @@ ggplot(state_outcomes,
   ) +
   theme_minimal()
 
-ggplot(state_outcomes,
+ggplot(clemson_state_outcomes,
        aes(x = distance_bucket, y = punt_rate, fill = play_category)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~down) +
@@ -217,7 +217,7 @@ ggplot(state_outcomes,
   ) +
   theme_minimal()
 
-ggplot(state_outcomes,
+ggplot(clemson_state_outcomes,
        aes(x = distance_bucket, y = fg_attempt_rate, fill = play_category)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~down) +
@@ -228,7 +228,7 @@ ggplot(state_outcomes,
   ) +
   theme_minimal()
 
-ggplot(state_outcomes,
+ggplot(clemson_state_outcomes,
        aes(x = distance_bucket, y = td_rate, fill = play_category)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~down) +
@@ -242,17 +242,17 @@ ggplot(state_outcomes,
 
 ```{r}
 
-yards_distribution <- state_outcomes_data |>
+clemson_yards_distribution <- clemson_state_outcomes_data |>
   group_by(play_category, down, distance_bucket, yards_bucket) |>
   summarise(n = n(), .groups = "drop") |>
   group_by(play_category, down, distance_bucket) |>
   mutate(prop = n / sum(n))
-yards_distribution
+clemson_yards_distribution
 ```
 
 ```{r}
 
-ggplot(yards_distribution, 
+ggplot(clemson_yards_distribution, 
        aes(x = distance_bucket, y = prop, fill = yards_bucket)) +
   geom_bar(stat = "identity") +
   facet_grid(play_category ~ down) +
@@ -264,7 +264,7 @@ ggplot(yards_distribution,
   ) +
   theme_minimal()
 
-ggplot(yards_distribution, 
+ggplot(clemson_yards_distribution, 
        aes(x = distance_bucket, y = prop, fill = yards_bucket)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_grid(play_category ~ down) +
@@ -273,7 +273,7 @@ ggplot(yards_distribution,
 
 ```{r}
 
-drive_outcomes <- duke_possession |>
+clemson_drive_outcomes <- clemson_possession |>
   arrange(game_id, drive_id, drive_play_number) |>
   group_by(game_id, drive_id) |>
   summarise(
@@ -292,7 +292,7 @@ drive_outcomes <- duke_possession |>
 
 ```{r}
 
-drive_outcomes |>
+clemson_drive_outcomes |>
   summarise(
     td_rate = mean(td_flag),
     pass_td_rate = mean(pass_td),
@@ -302,7 +302,7 @@ drive_outcomes |>
 
 ```{r}
 
-drive_outcomes |>
+clemson_drive_outcomes |>
   filter(td_flag == 1) |>
   summarise(
     pass_share = mean(pass_td),
@@ -312,7 +312,7 @@ drive_outcomes |>
 
 ```{r}
 
-possessions_per_game <- duke_possession |>
+clemson_possessions_per_game <- clemson_possession |>
   group_by(game_id) |>
   summarise(
     n_possessions = n_distinct(drive_id),
@@ -321,13 +321,13 @@ possessions_per_game <- duke_possession |>
 
 ```{r}
 
-avg_possessions <- possessions_per_game |>
+clemson_avg_possessions <- clemson_possessions_per_game |>
   summarise(avg_possessions = mean(n_possessions))
 
-avg_possessions
+clemson_avg_possessions
 ```
 
 ```{r}
 
-summary(possessions_per_game$n_possessions)
+summary(clemson_possessions_per_game$n_possessions)
 ```
