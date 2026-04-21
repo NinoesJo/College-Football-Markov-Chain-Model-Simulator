@@ -145,10 +145,21 @@ state_outcomes_data <- duke_possession |>
       distance <= 7 ~ "medium",
       TRUE ~ "long"
     ),
+    yards_bucket = case_when(
+      yards_gained < 0 ~ "Negative",
+      yards_gained <= 3 ~ "0-3",
+      yards_gained <= 7 ~ "4-7",
+      TRUE ~ "8+"
+    ),
 
     # Same-play outcomes
     td = ifelse(grepl("Touchdown", play_type), 1, 0),
-    first_down_conv = ifelse(new_series == 1, 1, 0),
+    first_down_conv = ifelse(
+      firstD_by_yards == 1 | 
+      firstD_by_penalty == 1 | 
+      grepl("Touchdown", play_type),
+      1, 0
+    ),
     turnover_flag = ifelse(turnover == 1, 1, 0),
     punt_flag = ifelse(grepl("Punt", next_play_type), 1, 0),
     fg_attempt_flag = ifelse(grepl("Field Goal", next_play_type), 1, 0)
@@ -215,5 +226,47 @@ ggplot(state_outcomes,
     x = "Distance",
     y = "FG Attempt Rate"
   ) +
+  theme_minimal()
+
+ggplot(state_outcomes,
+       aes(x = distance_bucket, y = td_rate, fill = play_category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~down) +
+  labs(
+    title = "Touchdown Conversion Rate",
+    x = "Distance",
+    y = "Conversion Rate"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+
+yards_distribution <- state_outcomes_data |>
+  group_by(play_category, down, distance_bucket, yards_bucket) |>
+  summarise(n = n(), .groups = "drop") |>
+  group_by(play_category, down, distance_bucket) |>
+  mutate(prop = n / sum(n))
+yards_distribution
+```
+
+```{r}
+
+ggplot(yards_distribution, 
+       aes(x = distance_bucket, y = prop, fill = yards_bucket)) +
+  geom_bar(stat = "identity") +
+  facet_grid(play_category ~ down) +
+  labs(
+    title = "Distribution of Yards Gained by State",
+    x = "Distance to Go",
+    y = "Proportion",
+    fill = "Yards Outcome"
+  ) +
+  theme_minimal()
+
+ggplot(yards_distribution, 
+       aes(x = distance_bucket, y = prop, fill = yards_bucket)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_grid(play_category ~ down) +
   theme_minimal()
 ```
