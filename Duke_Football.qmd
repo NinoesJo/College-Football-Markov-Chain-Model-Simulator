@@ -377,3 +377,27 @@ duke_possession |>
     `Avg FG Made Distance` = round(mean(yds_fg[fg_made == 1], na.rm = TRUE), 2)
   )
 ```
+
+```{r}
+
+fourth_down_stats <- duke_possession |>
+  filter(down == 4) |>
+  mutate(
+    go_for_it = ifelse(
+      play_type %in% c(
+        "Rush", "Rushing Touchdown",
+        "Pass Reception", "Passing Touchdown",
+        "Pass Incompletion", "Sack"
+      ),
+      1, 0
+    )
+  ) |>
+  summarise(
+    total_4th_downs = n(),
+    go_for_it_rate = mean(go_for_it, na.rm = TRUE),
+    punt_rate = mean(punt == 1, na.rm = TRUE),
+    fg_attempt_rate = mean(fg_inds == 1, na.rm = TRUE)
+  )
+
+fourth_down_stats
+```
