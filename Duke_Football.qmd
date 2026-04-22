@@ -331,3 +331,49 @@ avg_possessions
 
 summary(possessions_per_game$n_possessions)
 ```
+
+```{r}
+
+team_stats <- duke_possession |>
+  summarise(
+    avg_punt_yards = mean(yds_punted[punt == 1], na.rm = TRUE),
+    
+    avg_punt_field_position = mean(yards_to_goal[punt == 1], na.rm = TRUE),
+
+    field_goal_pct = mean(fg_made[fg_inds == 1], na.rm = TRUE),
+
+    avg_field_goal_length = mean(yds_fg[fg_inds == 1], na.rm = TRUE),
+
+    interception_pct = sum(int, na.rm = TRUE) / sum(pass_attempt, na.rm = TRUE),
+
+    fumble_pct = sum(fumble_vec, na.rm = TRUE) / 
+      (sum(rush, na.rm = TRUE) + sum(pass_attempt, na.rm = TRUE))
+  )
+
+team_stats
+```
+
+```{r}
+
+max_fg_attempt <- duke_possession |>
+  summarise(
+    longest_fg_attempt = max(yds_fg[fg_inds == 1], na.rm = TRUE)
+  )
+
+max_fg_attempt
+
+max_fg_made <- duke_possession |>
+  summarise(
+    longest_fg_made = max(yds_fg[fg_made == 1], na.rm = TRUE)
+  )
+
+max_fg_made
+```
+
+```{r}
+
+duke_possession |>
+  summarise(
+    `Avg FG Made Distance` = round(mean(yds_fg[fg_made == 1], na.rm = TRUE), 2)
+  )
+```
