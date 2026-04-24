@@ -401,3 +401,67 @@ clemson_fourth_down_stats <- clemson_possession |>
 
 clemson_fourth_down_stats
 ```
+
+```{r}
+
+clemson_fourth_down_by_distance <- clemson_possession |>
+  filter(down == 4) |>
+  mutate(
+    distance_bucket = case_when(
+      distance <= 3 ~ "short",
+      distance <= 7 ~ "medium",
+      TRUE ~ "long"
+    ),
+    decision = case_when(
+      punt == 1 ~ "Punt",
+      fg_inds == 1 ~ "FG",
+      TRUE ~ "Go"
+    )
+  ) |>
+  group_by(distance_bucket, decision) |>
+  summarise(n = n(), .groups = "drop") |>
+  group_by(distance_bucket) |>
+  mutate(rate = n / sum(n))
+
+clemson_fourth_down_by_distance
+```
+
+```{r}
+
+clemson_extra_stats <- clemson_possession |>
+  mutate(
+    is_pass = pass_attempt == 1,
+    is_sack = sack == 1,
+    is_penalty = grepl("Penalty", play_type),
+    
+    # Penalty yards:
+    # positive yds_penalty = yards gained by Duke
+    # negative yds_penalty = yards lost by Duke
+    penalty_for = is_penalty & yds_penalty > 0,
+    penalty_against = is_penalty & yds_penalty < 0
+  ) |>
+  summarise(
+    # Sack %
+    `Sack %` = mean(is_sack, na.rm = TRUE),
+    
+    # Avg yards lost after sack
+    `Avg yds lost after sack` = mean(abs(yds_sacked[is_sack]), na.rm = TRUE),
+    
+    # Passing %
+    `Passing %` = mean(is_pass, na.rm = TRUE),
+    
+    # Penalty For %
+    `Penalty For %` = mean(penalty_for, na.rm = TRUE),
+    
+    # Avg yards gained from penalty
+    `Avg yds gain from penalty` = mean(yds_penalty[penalty_for], na.rm = TRUE),
+    
+    # Penalty Against %
+    `Penalty Against %` = mean(penalty_against, na.rm = TRUE),
+    
+    # Avg yards lost from penalty
+    `Avg yards loss from penalty` = mean(abs(yds_penalty[penalty_against]), na.rm = TRUE)
+  )
+
+clemson_extra_stats
+```

@@ -1,5 +1,5 @@
 ---
-title: "Duke Football"
+title: "General Football Stats"
 author: "Johan Nino Espino"
 format: 
   pdf:
@@ -17,10 +17,16 @@ library(ggplot2)
 
 ```{r}
 
-# load the Duke dataset
+# load the dataset
 pbp <- load_cfb_pbp(2025)
+```
+
+```{r}
+
 general_possession <- pbp |>
-  filter(pos_team == "Virginia")
+  filter(pos_team == "Elon")
+
+#unique(pbp$pos_team)
 ```
 
 ```{r}
@@ -245,4 +251,81 @@ general_fourth_down_stats <- general_possession |>
   )
 
 general_fourth_down_stats
+```
+
+```{r}
+
+general_extra_stats <- general_possession |>
+  mutate(
+    is_pass = pass_attempt == 1,
+    is_sack = sack == 1,
+    is_penalty = grepl("Penalty", play_type),
+    
+    # Penalty yards:
+    # positive yds_penalty = yards gained by Duke
+    # negative yds_penalty = yards lost by Duke
+    penalty_for = is_penalty & yds_penalty > 0,
+    penalty_against = is_penalty & yds_penalty < 0
+  ) |>
+  summarise(
+    # Sack %
+    `Sack %` = mean(is_sack, na.rm = TRUE),
+    
+    # Avg yards lost after sack
+    `Avg yds lost after sack` = mean(abs(yds_sacked[is_sack]), na.rm = TRUE),
+    
+    # Passing %
+    `Passing %` = mean(is_pass, na.rm = TRUE),
+    
+    # Penalty For %
+    `Penalty For %` = mean(penalty_for, na.rm = TRUE),
+    
+    # Avg yards gained from penalty
+    `Avg yds gain from penalty` = mean(yds_penalty[penalty_for], na.rm = TRUE),
+    
+    # Penalty Against %
+    `Penalty Against %` = mean(penalty_against, na.rm = TRUE),
+    
+    # Avg yards lost from penalty
+    `Avg yards loss from penalty` = mean(abs(yds_penalty[penalty_against]), na.rm = TRUE)
+  )
+
+general_extra_stats
+```
+
+```{r}
+
+general_passing_stats <- general_possession |>
+  mutate(
+    is_completion = play_type %in% c("Pass Reception", "Passing Touchdown"),
+    is_attempt = play_type %in% c(
+      "Pass Reception",
+      "Passing Touchdown",
+      "Pass Incompletion",
+      "Interception Return"
+    )
+  ) |>
+  summarise(
+    completions = sum(is_completion, na.rm = TRUE),
+    attempts = sum(is_attempt, na.rm = TRUE),
+    completion_pct = completions / attempts
+  )
+
+general_passing_stats
+```
+
+```{r}
+
+# Includes sacks
+general_pass_attempt_types <- c(
+  "Pass Reception",
+  "Passing Touchdown",
+  "Pass Incompletion",
+  "Interception Return",
+  "Sack")
+
+general_passing_play_stats <- general_possession |>
+  summarise(pass_attempts = sum(play_type %in% general_pass_attempt_types, na.rm = TRUE), interception_pct = sum(play_type == "Interception Return", na.rm = TRUE) / pass_attempts, sack_pct = sum(play_type == "Sack", na.rm = TRUE) / pass_attempts)
+
+general_passing_play_stats
 ```
