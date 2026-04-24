@@ -24,7 +24,7 @@ pbp <- load_cfb_pbp(2025)
 ```{r}
 
 general_possession <- pbp |>
-  filter(pos_team == "Wisconsin")
+  filter(pos_team == "Vanderbilt")
 
 #unique(pbp$pos_team)
 ```
