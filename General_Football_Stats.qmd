@@ -1,6 +1,5 @@
 ---
 title: "General Football Stats"
-author: "Johan Nino Espino"
 format: 
   pdf:
     fig-height: 4
@@ -24,7 +23,7 @@ pbp <- load_cfb_pbp(2025)
 ```{r}
 
 general_possession <- pbp |>
-  filter(pos_team == "West Virginia")
+  filter(pos_team == "Duke") # Can change it to whatever team
 
 #unique(pbp$pos_team)
 ```
@@ -106,19 +105,7 @@ general_state_outcomes_data <- general_possession |>
       yards_gained <= 3 ~ "0-3",
       yards_gained <= 7 ~ "4-7",
       TRUE ~ "8+"
-    ),
-
-    # Same-play outcomes
-    td = ifelse(grepl("Touchdown", play_type), 1, 0),
-    first_down_conv = ifelse(
-      firstD_by_yards == 1 | 
-      firstD_by_penalty == 1 | 
-      grepl("Touchdown", play_type),
-      1, 0
-    ),
-    turnover_flag = ifelse(turnover == 1, 1, 0),
-    punt_flag = ifelse(grepl("Punt", next_play_type), 1, 0),
-    fg_attempt_flag = ifelse(grepl("Field Goal", next_play_type), 1, 0)
+    )
   )
 
 general_state_outcomes <- general_state_outcomes_data |>
@@ -126,11 +113,6 @@ general_state_outcomes <- general_state_outcomes_data |>
   summarise(
     n_plays = n(),
     avg_yards = mean(yards_gained, na.rm = TRUE),
-    td_rate = mean(td, na.rm = TRUE),
-    first_down_rate = mean(first_down_conv, na.rm = TRUE),
-    turnover_rate = mean(turnover_flag, na.rm = TRUE),
-    punt_rate = mean(punt_flag, na.rm = TRUE),
-    fg_attempt_rate = mean(fg_attempt_flag, na.rm = TRUE),
     .groups = "drop"
   )
 
@@ -145,13 +127,6 @@ general_drive_outcomes <- general_possession |>
   summarise(
     # Did the drive end in a TD?
     td_flag = max(grepl("Touchdown", play_type), na.rm = TRUE),
-
-    # Type of TD
-    pass_td = max(grepl("Passing Touchdown", play_type), na.rm = TRUE),
-    rush_td = max(grepl("Rushing Touchdown", play_type), na.rm = TRUE),
-
-    start_down = first(down),
-    start_distance = first(distance),
     .groups = "drop"
   )
 ```
@@ -160,9 +135,7 @@ general_drive_outcomes <- general_possession |>
 
 general_drive_outcomes |>
   summarise(
-    td_rate = mean(td_flag),
-    pass_td_rate = mean(pass_td),
-    rush_td_rate = mean(rush_td)
+    td_rate = mean(td_flag)
   )
 ```
 
@@ -195,8 +168,6 @@ general_team_stats <- general_possession |>
 
     avg_field_goal_length = mean(yds_fg[fg_inds == 1], na.rm = TRUE),
 
-    interception_pct = sum(int, na.rm = TRUE) / sum(pass_attempt, na.rm = TRUE),
-
     fumble_pct = sum(fumble_vec, na.rm = TRUE) / 
       (sum(rush, na.rm = TRUE) + sum(pass_attempt, na.rm = TRUE))
   )
@@ -212,13 +183,6 @@ general_max_fg_attempt <- general_possession |>
   )
 
 general_max_fg_attempt
-
-general_max_fg_made <- general_possession |>
-  summarise(
-    longest_fg_made = max(yds_fg[fg_made == 1], na.rm = TRUE)
-  )
-
-general_max_fg_made
 ```
 
 ```{r}
@@ -257,7 +221,6 @@ general_fourth_down_stats
 
 general_extra_stats <- general_possession |>
   mutate(
-    is_pass = pass_attempt == 1,
     is_sack = sack == 1,
     is_penalty = grepl("Penalty", play_type),
     
@@ -268,14 +231,8 @@ general_extra_stats <- general_possession |>
     penalty_against = is_penalty & yds_penalty < 0
   ) |>
   summarise(
-    # Sack %
-    `Sack %` = mean(is_sack, na.rm = TRUE),
-    
     # Avg yards lost after sack
     `Avg yds lost after sack` = mean(abs(yds_sacked[is_sack]), na.rm = TRUE),
-    
-    # Passing %
-    `Passing %` = mean(is_pass, na.rm = TRUE),
     
     # Penalty For %
     `Penalty For %` = mean(penalty_for, na.rm = TRUE),
